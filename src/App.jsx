@@ -32,9 +32,18 @@ function CollapsibleTreeContent({ data, width, height }) {
     const nodes = root.descendants().map((item) => {
       return { ...item.data.data, x: item.y, y: item.x };
     });
-
-    return ["", ""];
-  }, [data]);
+    const nodeIndices = {};
+    nodes.forEach((node, i) => {
+      nodeIndices[node.id] = i;
+    });
+    const links = root.links().map(({ source, target }) => {
+      return {
+        source: nodeIndices[source.data.data.id],
+        target: nodeIndices[target.data.data.id],
+      };
+    });
+    return [nodes, links];
+  }, [data, width, height, margin, collapsed]);
 
   return (
     <div>
