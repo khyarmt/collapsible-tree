@@ -1,22 +1,104 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as d3 from "d3";
 
 function CollapsibleTreeContent({ width, height, data }) {
+  const margin = {
+    top: 50,
+    right: 250,
+    bottom: 50,
+    left: 50,
+  };
+  const [collapsed, setCollapsed] = useState({});
+  useEffect(() => {
+    const newCollapsed = {};
+    for (const item of data) {
+      newCollapsed[item.id] = item.depth >= 2;
+    }
+    setCollapsed(newCollapsed);
+  }, [data]);
+  const [nodes, links] = useMemo(() => {
+    const stratify = d3.stratify();
+    const root = d3.hierarchy(stratify(data), (item) => {
+      return collapsed[item.id] ? null : item.children;
+    });
+    const tree = d3
+      .tree()
+      .size([
+        height - margin.top - margin.bottom,
+        width - margin.right - margin.left,
+      ]);
+    tree(root);
+    const nodes = root.descendants().map((item) => {
+      return { ...item.data.data, x: item.y, y: item.x };
+    });
+    const nodeIndices = {};
+    nodes.forEach((node, i) => {
+      nodeIndices[node.id] = i;
+    });
+    console.log(root.links());
+    const links = root.links().map(({ source, target }) => {
+      return {
+        source: nodeIndices[source.data.data.id],
+        target: nodeIndices[target.data.data.id],
+      };
+    });
+
+    return [nodes, links];
+  }, [data, width, height, margin, collapsed]);
+  console.log(nodes);
+
   return (
-    <div
-      style={{
-        position: "absolute",
-        top: 0,
-        right: 0,
-        bottom: 0,
-        left: 0,
-        width: width,
-        height: height,
-        backgroundColor: "#78AC23",
-      }}
-    >
-      <p>Hello, Collapsible Tree Content!!</p>
-    </div>
+    <svg width={width} height={height} style={{ display: "block" }}>
+      <g transform={`translate(${margin.left},${margin.top})`}>
+        <g>
+          {links.map((link) => {
+            // dを指定する。
+            console.log(link);
+            return (
+              <g>
+                <path></path>
+              </g>
+            );
+          })}
+        </g>
+        <g>
+          {nodes.map((node) => {
+            return (
+              <g
+                key={node.id}
+                transform={`translate(${node.x},${node.y})`}
+                onClick={() => {
+                  setCollapsed({
+                    ...collapsed,
+                    [node.id]: !collapsed[node.id],
+                  });
+                }}
+              >
+                <circle
+                  r="5"
+                  fill={
+                    collapsed[node.id] && node.childCount > 0
+                      ? "#FF4858"
+                      : "#747F7F"
+                  }
+                ></circle>
+                <text
+                  x="8"
+                  textAnchor="begin"
+                  dominantBaseline="central"
+                  fontSize="14"
+                  fontWeight="bold"
+                  fill="#747F7F"
+                  transform="rotate(-30)"
+                >
+                  {node.name}
+                </text>
+              </g>
+            );
+          })}
+        </g>
+      </g>
+    </svg>
   );
 }
 
@@ -47,11 +129,13 @@ function CollapsibleTree({ data }) {
         left: 0,
       }}
     >
-      <CollapsibleTreeContent
-        width={size.width}
-        height={size.height}
-        data={data}
-      />
+      {data && (
+        <CollapsibleTreeContent
+          width={size.width}
+          height={size.height}
+          data={data}
+        />
+      )}
     </div>
   );
 }
