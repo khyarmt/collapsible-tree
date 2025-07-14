@@ -35,7 +35,6 @@ function CollapsibleTreeContent({ width, height, data }) {
     nodes.forEach((node, i) => {
       nodeIndices[node.id] = i;
     });
-    console.log(root.links());
     const links = root.links().map(({ source, target }) => {
       return {
         source: nodeIndices[source.data.data.id],
@@ -45,18 +44,37 @@ function CollapsibleTreeContent({ width, height, data }) {
 
     return [nodes, links];
   }, [data, width, height, margin, collapsed]);
-  console.log(nodes);
 
   return (
-    <svg width={width} height={height} style={{ display: "block" }}>
+    <svg
+      width={width}
+      height={height}
+      style={{ display: "block" }}
+      className="collapsible-tree"
+    >
       <g transform={`translate(${margin.left},${margin.top})`}>
         <g>
           {links.map((link) => {
-            // dを指定する。
-            console.log(link);
+            const sourcePoint = {
+              x: nodes[link.source].x,
+              y: nodes[link.source].y,
+            };
+            const targetPoint = {
+              x: nodes[link.target].x,
+              y: nodes[link.target].y,
+            };
+            const path = `M ${sourcePoint.x} ${sourcePoint.y} C ${
+              (sourcePoint.x + targetPoint.x) / 2
+            } ${sourcePoint.y}, ${(sourcePoint.x + targetPoint.x) / 2} ${
+              targetPoint.y
+            }, ${targetPoint.x} ${targetPoint.y}`;
+
             return (
-              <g>
-                <path></path>
+              <g
+                key={`${nodes[link.source].id}:${nodes[link.target].id}`}
+                className="link"
+              >
+                <path d={path} stroke="#747F7F" fill="none"></path>
               </g>
             );
           })}
@@ -73,6 +91,7 @@ function CollapsibleTreeContent({ width, height, data }) {
                     [node.id]: !collapsed[node.id],
                   });
                 }}
+                className={node.childCount > 0 ? "node clickable" : "node"}
               >
                 <circle
                   r="5"
