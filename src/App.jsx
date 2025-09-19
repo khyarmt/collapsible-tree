@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import * as d3 from "d3";
 
 function CollapsibleTreeContent({ width, height, data }) {
@@ -16,12 +16,96 @@ function CollapsibleTreeContent({ width, height, data }) {
     }
     setCollapsed(newCollapsed);
   }, [data]);
-  console.log(collapsed);
+  const [nodes, links] = useMemo(() => {
+    const stratify = d3.stratify();
+    const root = d3.hierarchy(stratify(data), (item) =>
+      collapsed[item.id] ? null : item.children
+    );
+    const tree = d3
+      .tree()
+      .size([
+        height - margin.top - margin.bottom,
+        width - margin.left - margin.right,
+      ]);
+    tree(root);
+    const nodes = root.descendants().map((item) => {
+      return {
+        ...item.data.data,
+        x: item.y,
+        y: item.x,
+      };
+    });
+    const nodeIndices = {};
+    nodes.forEach((node, i) => {
+      nodeIndices[node.id] = i;
+    });
+    const links = root.links().map(({ source, target }) => {
+      return {
+        source: nodeIndices[source.data.data.id],
+        target: nodeIndices[target.data.data.id],
+      };
+    });
+    return [nodes, links];
+  }, [data, width, height, margin, collapsed]);
 
   return (
-    <div>
-      <p>Hello, Collapsible Tree Content!!</p>
-    </div>
+    <svg width={width} height={height} className="collapsible-tree">
+      <g transform={`translate(${margin.left}, ${margin.top})`}>
+        <g>
+          {links.map((link) => {
+            const source = nodes[link.source];
+            const target = nodes[link.target];
+            const d = `M ${source.x}, ${source.y} C ${
+              (source.x + target.x) / 2
+            }, ${source.y} ${(source.x + target.x) / 2}, ${target.y} ${
+              target.x
+            }, ${target.y} `;
+            return (
+              <g key={`${source.id}:${target.id}`} className="link">
+                <path d={d} stroke="#777777" fill="none" />
+              </g>
+            );
+          })}
+        </g>
+        <g>
+          {nodes.map((node) => {
+            return (
+              <g
+                key={node.id}
+                transform={`translate(${node.x}, ${node.y})`}
+                onClick={() => {
+                  setCollapsed({
+                    ...collapsed,
+                    [node.id]: !collapsed[node.id],
+                  });
+                }}
+                className={node.childCount > 0 ? "node clickable" : "node"}
+              >
+                <circle
+                  r="3"
+                  fill={
+                    collapsed[node.id] && node.childCount > 0
+                      ? "#e36689"
+                      : "#bfe6f0"
+                  }
+                />
+                <text
+                  x="8"
+                  textAnchor="begin"
+                  dominantBaseline="central"
+                  fontSize="8"
+                  fill="#777777"
+                  fontWeight="bold"
+                  transform="rotate(-30)"
+                >
+                  {node.name}
+                </text>
+              </g>
+            );
+          })}
+        </g>
+      </g>
+    </svg>
   );
 }
 
