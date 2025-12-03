@@ -74,13 +74,9 @@ function CollapsibleTreeContent({ data, width, height }) {
         <g>
           {nodes.map((node) => {
             return (
-              <circle
-                key={node.id}
-                cx={node.x}
-                cy={node.y}
-                r="5"
-                fill="#b09b6a"
-              />
+              <g key={node.id} transform={`translate(${node.x},${node.y})`}>
+                <circle r="5" fill="#b09b6a" />
+              </g>
             );
           })}
         </g>
