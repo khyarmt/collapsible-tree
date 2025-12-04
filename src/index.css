@@ -9,3 +9,15 @@ svg {
   bottom: 0;
   left: 0;
 }
+
+.clickable {
+  cursor: pointer;
+}
+
+svg.collapsible-tree .node {
+  transition: transform 0.5s ease;
+}
+
+svg.collapsible-tree .link path {
+  transition: d 0.5s ease;
+}

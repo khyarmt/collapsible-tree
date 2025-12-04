@@ -2,14 +2,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import * as d3 from "d3";
 
 function CollapsibleTreeContent({ data, width, height }) {
-  //console.log(data);
-  //console.log(width, height);
-
-  // color
-  // #585656
-  // #b09b6a
-  // #f25222
-
   const margin = {
     top: 50,
     right: 250,
@@ -55,8 +47,8 @@ function CollapsibleTreeContent({ data, width, height }) {
   }, [data, width, height, margin, collapsed]);
 
   return (
-    <svg width={width} height={height}>
-      <g transform={`translate(${margin.left}, ${margin.top})`}>
+    <svg width={width} height={height} className="collapsible-tree">
+      <g transform={`translate(${margin.left},${margin.top})`}>
         <g>
           {links.map(({ source, target }) => {
             const sourceX = nodes[source].x;
@@ -68,14 +60,48 @@ function CollapsibleTreeContent({ data, width, height }) {
             } ${sourceY}, ${
               (sourceX + targetX) / 2
             } ${targetY}, ${targetX} ${targetY}`;
-            return <path d={d} stroke="#585656" fill="none" />;
+            return (
+              <g
+                key={`${nodes[source].id}:${nodes[target].id}`}
+                className="link"
+              >
+                <path d={d} stroke="#2d3135" fill="none" />
+              </g>
+            );
           })}
         </g>
         <g>
           {nodes.map((node) => {
             return (
-              <g key={node.id} transform={`translate(${node.x},${node.y})`}>
-                <circle r="5" fill="#b09b6a" />
+              <g
+                key={node.id}
+                transform={`translate(${node.x},${node.y})`}
+                className={node.childCount > 0 ? "node clickable" : "node"}
+                onClick={() => {
+                  setCollapsed({
+                    ...collapsed,
+                    [node.id]: !collapsed[node.id],
+                  });
+                }}
+              >
+                <circle
+                  r="5"
+                  fill={
+                    collapsed[node.id] && node.childCount > 0
+                      ? "#d65b64"
+                      : "#00b6c8"
+                  }
+                />
+                <text
+                  x="8"
+                  textAnchor="start"
+                  dominantBaseline="central"
+                  fontSize="10"
+                  transform="rotate(-30)"
+                  fill="#2d3135"
+                >
+                  {node.name}
+                </text>
               </g>
             );
           })}
